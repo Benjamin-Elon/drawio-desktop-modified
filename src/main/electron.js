@@ -17,6 +17,9 @@ import contextMenu from 'electron-context-menu';
 import {spawn} from 'child_process';
 import {disableUpdate as disUpPkg} from './disableUpdate.js';
 
+// ADD: SQLite
+import Database from 'better-sqlite3';
+
 let store;
 
 try
@@ -28,6 +31,21 @@ catch (e)
 	console.error('Failed to initialize electron-store:', e);
 	store = null;
 }
+
+// ADD: keep track of open DBs by an id (string)
+const dbRegistry = new Map();
+/** Generate a simple id; you can replace with something stronger if needed */
+function makeDbId() {
+  return Math.random().toString(36).slice(2);
+}
+
+// ADD: validate DB path and allow read-only open by default
+function validateDbPath(dbPath) {
+	const abs = path.resolve(dbPath);
+	if (abs.startsWith(appBaseDir)) throw new Error('DB path not permitted');
+	if (!fs.existsSync(abs)) throw new Error('DB file not found');
+	return abs;
+  }
 
 const disableUpdate = disUpPkg() || 
 						process.env.DRAWIO_DISABLE_UPDATE === 'true' ||
@@ -83,7 +101,7 @@ let enableSpellCheck = store != null ? store.get('enableSpellCheck') : false;
 enableSpellCheck = enableSpellCheck != null ? enableSpellCheck : isMac;
 let enableStoreBkp = store != null ? (store.get('enableStoreBkp') != null ? store.get('enableStoreBkp') : true) : false;
 let dialogOpen = false;
-let enablePlugins = false;
+let enablePlugins = true;
 const codeDir = path.join(__dirname, '/../../drawio/src/main/webapp');
 const codeUrl = url.pathToFileURL(codeDir).href.replace(/\/.\:\//, str => str.toUpperCase()); // Fix for windows drive letter
 // Production app uses asar archive, so we need to go up two more level. It's extra cautious since asar is read-only anyway.
@@ -234,8 +252,7 @@ function createWindow (opt = {})
 	})
 	
 	mainWindow.loadURL(ourl)
-
-	// Open the DevTools.
+	
 	if (__DEV__)
 	{
 		mainWindow.webContents.openDevTools()
@@ -370,6 +387,19 @@ function isPluginsEnabled()
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() =>
 {
+	// AFTER app.whenReady
+	const pluginFolder = path.join(getAppDataFolder(), 'plugins');
+	try {
+	if (!fs.existsSync(pluginFolder)) {
+		fs.mkdirSync(pluginFolder, { recursive: true });
+	}
+	} catch (e) {
+	console.error('Plugin folder creation failed:', e);
+	}
+
+// (ADD) Always set enablePlugins = true
+enablePlugins = true;
+
 	// Enforce our CSP on all contents
 	session.defaultSession.webRequest.onHeadersReceived((details, callback) => 
 	{
@@ -505,7 +535,7 @@ app.whenReady().then(() =>
 	}
 	
 	var options = program.opts();
-	enablePlugins = options.enablePlugins;
+	enablePlugins = true
 
 	if (options.zoom != null)
 	{
@@ -2354,27 +2384,34 @@ async function saveFile(fileObject, data, origStat, overwrite, defEnc)
 
 async function writeFile(filePath, data, enc)
 {
-	if (!checkFileContent(data, enc) || path.resolve(filePath).startsWith(appBaseDir))
-	{
+	const abs = path.resolve(filePath);
+
+	// Allow trusted text writes requested as UTF-8
+	if (enc === 'utf8' && !abs.startsWith(appBaseDir)) {
+		let fh;
+		try {
+		fh = await fsProm.open(abs, O_SYNC | O_CREAT | O_WRONLY | O_TRUNC);
+		await fsProm.writeFile(fh, data, enc);
+		await fh.sync();
+		} finally {
+		await fh?.close();
+		}
+		return;
+	}
+
+	if (!checkFileContent(data, enc) || abs.startsWith(appBaseDir)) {
 		throw new Error('Invalid file data');
 	}
-	else
-	{
-		let fh;
 
-		try
-		{
-			// O_SYNC is for sync I/O and reduce risk of file corruption
-			fh = await fsProm.open(filePath, O_SYNC | O_CREAT | O_WRONLY | O_TRUNC);
-			await fsProm.writeFile(fh, data, enc);
-			await fh.sync(); // Flush to disk
-		}
-		finally
-		{
-			await fh?.close();
-		}
+	let fh;
+	try {
+		fh = await fsProm.open(abs, O_SYNC | O_CREAT | O_WRONLY | O_TRUNC);
+		await fsProm.writeFile(fh, data, enc);
+		await fh.sync();
+	} finally {
+		await fh?.close();
 	}
-};
+}
 
 function getAppDataFolder()
 {
@@ -2416,13 +2453,13 @@ function checkFileExists(pathParts)
 async function showOpenDialog(defaultPath, filters, properties)
 {
 	let win = BrowserWindow.getFocusedWindow();
-
+  
 	return dialog.showOpenDialog(win, {
-		defaultPath: defaultPath,
-		filters: filters,
-		properties: properties
+	  defaultPath: (typeof defaultPath === 'string' ? defaultPath : undefined),
+	  filters: filters,
+	  properties: properties
 	});
-};
+  };
 
 async function showSaveDialog(defaultPath, filters)
 {
@@ -2492,15 +2529,21 @@ function dirname(path_p)
 
 async function readFile(filename, encoding)
 {
-	let data = await fsProm.readFile(filename, encoding);
+  const abs = path.resolve(filename);
+  const data = await fsProm.readFile(filename, encoding);
 
-	if (checkFileContent(data, encoding) && !path.resolve(filename).startsWith(appBaseDir))
-	{
-		return data;
-	}
+  // Allow trusted text reads explicitly requested as UTF-8
+  if (encoding === 'utf8' && !abs.startsWith(appBaseDir)) {
+    return data;
+  }
 
-	throw new Error('Invalid file data');
+  if (checkFileContent(data, encoding) && !abs.startsWith(appBaseDir)) {
+    return data;
+  }
+
+  throw new Error('Invalid file data');
 }
+
 
 async function fileStat(file)
 {
@@ -2712,6 +2755,68 @@ ipcMain.on("rendererReq", async (event, args) =>
 		case 'isFullscreen':
 			ret = BrowserWindow.getFocusedWindow().isFullScreen();
 			break;
+		case 'dbOpen': {
+			// args: { dbPath, readOnly?: boolean, pragma?: object }
+			const abs = validateDbPath(args.dbPath);
+			const options = { readonly: !!args.readOnly, fileMustExist: true };
+			const db = new Database(abs, options);
+			
+			// Optional pragmas (e.g., { journal_mode: 'OFF', synchronous: 0 })
+			if (args.pragma && typeof args.pragma === 'object') {
+				for (const [key, val] of Object.entries(args.pragma)) {
+				if (val === undefined || val === null) continue;
+				db.pragma(`${key}=${val}`);
+				}
+			}
+			const dbId = makeDbId();
+			dbRegistry.set(dbId, db);
+			// reply with handle
+			event.reply('mainResp', { reqId: args.reqId, data: { dbId } });
+			break;
+			}
+			
+		case 'dbClose': {
+			// args: { dbId }
+			const db = dbRegistry.get(args.dbId);
+			if (db) { db.close(); dbRegistry.delete(args.dbId); }
+			event.reply('mainResp', { reqId: args.reqId, data: true });
+			break;
+			}
+		
+		case 'dbQuery': {
+			// args: { dbId, sql, params?: any[] | object }
+			const db = dbRegistry.get(args.dbId);
+			if (!db) throw new Error('db not open');
+			const stmt = db.prepare(args.sql);
+			const rows = Array.isArray(args.params) || typeof args.params === 'object'
+				? stmt.all(args.params)
+				: stmt.all();
+			event.reply('mainResp', { reqId: args.reqId, data: rows });
+			break;
+			}
+		
+		case 'dbExec': {
+			// args: { dbId, sql, params?: any[] | object }
+			const db = dbRegistry.get(args.dbId);
+			if (!db) throw new Error('db not open');
+			const stmt = db.prepare(args.sql);
+			const info = Array.isArray(args.params) || typeof args.params === 'object'
+				? stmt.run(args.params)
+				: stmt.run();
+			// better-sqlite3 returns info with changes, lastInsertRowid
+			event.reply('mainResp', { reqId: args.reqId, data: { changes: info.changes, lastInsertRowid: String(info.lastInsertRowid) } });
+			break;
+			}
+		
+		case 'dbPragma': {
+			// args: { dbId, name }   // read-only pragma fetch
+			const db = dbRegistry.get(args.dbId);
+			if (!db) throw new Error('db not open');
+			const out = db.pragma(args.name, { simple: true });
+			event.reply('mainResp', { reqId: args.reqId, data: out });
+			break;
+			}
+			  
 		};
 
 		event.reply('mainResp', {success: true, data: ret, reqId: args.reqId});

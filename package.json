@@ -36,6 +36,7 @@
   "homepage": "https://github.com/jgraph/drawio",
   "dependencies": {
     "@cantoo/pdf-lib": "^2.4.2",
+    "better-sqlite3": "^12.4.1",
     "commander": "^13.1.0",
     "compression": "^1.8.1",
     "crc": "^4.3.2",
@@ -52,6 +53,7 @@
     "dotenv": "^16.6.1",
     "electron": "^37.6.1",
     "electron-builder": "^26.0.20",
+    "electron-rebuild": "^3.2.9",
     "sumchecker": "^3.0.1"
   }
 }
