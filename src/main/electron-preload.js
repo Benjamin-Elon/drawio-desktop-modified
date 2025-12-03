@@ -1,4 +1,4 @@
-
+// This file has been modified to load the file system bridge.
 console.log('[Preload] Script running');
 
 const {
@@ -10,7 +10,7 @@ let reqId = 1;
 let reqInfo = {};
 let fileChangedListeners = {};
 
-// ADD
+// (ADD)
 function requestViaIPC(msg, callback, error) {
   msg.reqId = msg.reqId || (reqId++);
   reqInfo[msg.reqId] = { callback, error };
@@ -100,7 +100,6 @@ contextBridge.exposeInMainWorld('fsBridge', {
 		});
 	  },
 
-	// AFTER
 	writeText(absPath, content) {
 		return new Promise((resolve, reject) => {
 		requestViaIPC(
@@ -147,7 +146,7 @@ contextBridge.exposeInMainWorld('fsBridge', {
 		});
 	  },
 	  
-	  // (OPTIONAL ADD) keep parity with unwatch
+	  // ( ADD) keep parity with unwatch
 	  watchFile(absPath, listener) {
 		requestViaIPC({ action: 'watchFile', path: absPath, listener }, () => {}, () => {});
 	  },
@@ -155,7 +154,7 @@ contextBridge.exposeInMainWorld('fsBridge', {
 
 
 
-// ADD: SQLite bridge
+// (ADD): SQLite bridge
 contextBridge.exposeInMainWorld('dbBridge', {
 	/**
 	 * Open a database and receive a handle id.
@@ -233,7 +232,7 @@ contextBridge.exposeInMainWorld('dbBridge', {
 console.log('[Preload] window.electron and fsBridge exposed');
 
 // =======================================================
-// ADD THIS: postMessage bridge for contextIsolation=true
+// (ADD) : postMessage bridge for contextIsolation=true
 // =======================================================
 window.addEventListener('message', (event) => {
 	// Only accept messages from same window

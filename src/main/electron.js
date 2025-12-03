@@ -1,3 +1,5 @@
+// This file has been modified to allow a file system bridge for plugins.
+
 import fs from 'fs';
 import { promises as fsProm } from 'fs';
 import path from 'path';
@@ -17,7 +19,7 @@ import contextMenu from 'electron-context-menu';
 import {spawn} from 'child_process';
 import {disableUpdate as disUpPkg} from './disableUpdate.js';
 
-// ADD: SQLite
+// (ADD): SQLite
 import Database from 'better-sqlite3';
 
 let store;
@@ -32,14 +34,14 @@ catch (e)
 	store = null;
 }
 
-// ADD: keep track of open DBs by an id (string)
+// (ADD): keep track of open DBs by an id (string)
 const dbRegistry = new Map();
 /** Generate a simple id; you can replace with something stronger if needed */
 function makeDbId() {
   return Math.random().toString(36).slice(2);
 }
 
-// ADD: validate DB path and allow read-only open by default
+// (ADD): validate DB path and allow read-only open by default
 function validateDbPath(dbPath) {
 	const abs = path.resolve(dbPath);
 	if (abs.startsWith(appBaseDir)) throw new Error('DB path not permitted');
@@ -2755,6 +2757,7 @@ ipcMain.on("rendererReq", async (event, args) =>
 		case 'isFullscreen':
 			ret = BrowserWindow.getFocusedWindow().isFullScreen();
 			break;
+		// (ADD)
 		case 'dbOpen': {
 			// args: { dbPath, readOnly?: boolean, pragma?: object }
 			const abs = validateDbPath(args.dbPath);
@@ -2774,7 +2777,7 @@ ipcMain.on("rendererReq", async (event, args) =>
 			event.reply('mainResp', { reqId: args.reqId, data: { dbId } });
 			break;
 			}
-			
+		// (ADD)	
 		case 'dbClose': {
 			// args: { dbId }
 			const db = dbRegistry.get(args.dbId);
@@ -2782,7 +2785,7 @@ ipcMain.on("rendererReq", async (event, args) =>
 			event.reply('mainResp', { reqId: args.reqId, data: true });
 			break;
 			}
-		
+		// (ADD)
 		case 'dbQuery': {
 			// args: { dbId, sql, params?: any[] | object }
 			const db = dbRegistry.get(args.dbId);
@@ -2794,7 +2797,7 @@ ipcMain.on("rendererReq", async (event, args) =>
 			event.reply('mainResp', { reqId: args.reqId, data: rows });
 			break;
 			}
-		
+		// (ADD)
 		case 'dbExec': {
 			// args: { dbId, sql, params?: any[] | object }
 			const db = dbRegistry.get(args.dbId);
@@ -2807,7 +2810,7 @@ ipcMain.on("rendererReq", async (event, args) =>
 			event.reply('mainResp', { reqId: args.reqId, data: { changes: info.changes, lastInsertRowid: String(info.lastInsertRowid) } });
 			break;
 			}
-		
+		// (ADD)
 		case 'dbPragma': {
 			// args: { dbId, name }   // read-only pragma fetch
 			const db = dbRegistry.get(args.dbId);
