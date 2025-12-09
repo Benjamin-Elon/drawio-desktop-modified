@@ -11,11 +11,11 @@
   "scripts": {
     "start": "electron .",
     "sync": "node ./sync.cjs",
-    "release-win": "electron-builder --config electron-builder-win.json --publish always",
-    "release-win32": "electron-builder --config electron-builder-win32.json --publish always",
-    "release-win-arm64": "electron-builder --config electron-builder-win-arm64.json --publish always",
-    "release-appx": "electron-builder --config electron-builder-appx.json --publish always",
-    "release-linux": "electron-builder --config electron-builder-linux-mac.json --publish always",
+    "release-win": "electron-builder --config electron-builder-win.json --publish never",
+    "release-win32": "electron-builder --config electron-builder-win32.json --publish never",
+    "release-win-arm64": "electron-builder --config electron-builder-win-arm64.json --publish never",
+    "release-appx": "electron-builder --config electron-builder-appx.json --publish never",
+    "release-linux": "electron-builder --config electron-builder-linux-mac.json --publish never",
     "release-snap": "electron-builder --config electron-builder-snap.json --publish never"
   },
   "repository": {
