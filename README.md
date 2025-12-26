@@ -7,9 +7,10 @@ The system functions as a garden-planning IDE:
 2. Draw beds, garden zones, and modules.
 3. Drag crops into place and generate schedules based on climate, GDD, frost windows, and plant traits.
 4. Plan multi-crop successions and turnovers.
-5. Manage tasks with linked Kanban boards.
+5. Manage tasks with Automated, linked Kanban boards.
 6. Build multi-person workflows using role cards and team modules.
-7. In addition to all the base features included ini Draw.io
+7. Automatically track and visualize when diagram elements were created or edited, using time-based coloring, filtering, and navigation to explore change history directly on the canvas.
+8. In addition to all the base features included ini Draw.io
 
 Who This Is For
 -Home gardeners
