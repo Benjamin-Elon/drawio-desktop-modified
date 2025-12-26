@@ -1,69 +1,48 @@
-About
------ 
+Trellis for Drawio extends Draw.io with a coordinated suite of plugins that turn diagrams into interactive, computational garden plans.
 
-**drawio-desktop** is a diagramming desktop app based on [Electron](https://electronjs.org/) that wraps the [core draw.io editor](https://github.com/jgraph/drawio).
+Most of the plugin depend on local database access and therefor require this slightly modified version of Drawio. The only changes are a file system bridge for Database access, and new built-in plugins.
 
-Download built binaries from the [releases section](https://github.com/jgraph/drawio-desktop/releases).
+The system functions as a garden-planning IDE:
+1. Create yearly business plans.
+2. Draw beds, garden zones, and modules.
+3. Drag crops into place and generate schedules based on climate, GDD, frost windows, and plant traits.
+4. Plan multi-crop successions and turnovers.
+5. Manage tasks with linked Kanban boards.
+6. Build multi-person workflows using role cards and team modules.
+7. In addition to all the base features included ini Draw.io
 
-**Can I use this app for free?** Yes, under the apache 2.0 license. If you don't change the code and accept it is provided "as-is", you can use it for any purpose.
+Who This Is For
+-Home gardeners
+-Market gardeners
+-School garden programs and teachers
+-Urban agriculture projects
+-Designers seeking visual + computational diagrams
+-Anyone who dislikes juggling spreadsheets and calendar apps
 
-Security
---------
-
-draw.io Desktop is designed to be completely isolated from the Internet, apart from the update process. This checks github.com at startup for a newer version and downloads it from an AWS S3 bucket owned by Github. All JavaScript files are self-contained, the Content Security Policy forbids running remotely loaded JavaScript.
-
-No diagram data is ever sent externally, nor do we send any analytics about app usage externally. There is a Content Security Policy in place on the web part of the interface to ensure external transmission cannot happen, even by accident.
-
-Security and isolating the app are the primarily objectives of draw.io desktop. If you ask for anything that involves external connections enabled in the app by default, the answer will be no.
-
-Support
--------
-
-Support is provided on a reasonable business constraints basis, but without anything contractually binding. All support is provided via this repo. There is no private ticketing support for non-paying users.
-
-Purchasing draw.io for Confluence or Jira does not entitle you to commercial support for draw.io desktop.
-
-Developing
-----------
-
-**draw.io** is a git submodule of **drawio-desktop**. To get both you need to clone recursively:
-
-`git clone --recursive https://github.com/jgraph/drawio-desktop.git`
+Why Draw.io?
+-Draw.io offers:
+-A fast, responsive graphical canvas
+-XML-structured shapes (ideal for embedding data)
+-A plugin system with full graph access
+-Zero server dependencies
+-Offline desktop and online webapp support
+-Compatibility with existing Draw.io diagrams
 
 To run this:
 1. `npm install` (in the root directory of this repo)
 2. [internal use only] export DRAWIO_ENV=dev if you want to develop/debug in dev mode.
 3. `npm start` _in the root directory of this repo_ runs the app. For debugging, use `npm start --enable-logging`.
 
-Note: If a symlink is used to refer to drawio repo (instead of the submodule), then symlink the `node_modules` directory inside `drawio/src/main/webapp` also.
+To Build This:
+(in the root directory of this repo)
+"npm run release-win"
+"npm run release-win32"
+"npm run release-win-arm64"
+"npm run release-appx"
+"npm run release-linux"
+"npm run release-snap"
 
-To release:
-1. Update the draw.io sub-module and push the change. Add version tag before pushing to origin.
-2. Wait for the builds to complete (https://travis-ci.org/jgraph/drawio-desktop and https://ci.appveyor.com/project/davidjgraph/drawio-desktop)
-3. Go to https://github.com/jgraph/drawio-desktop/releases, edit the preview release.
-4. Download the windows exe and windows portable, sign them using `signtool sign /a /tr http://rfc3161timestamp.globalsign.com/advanced /td SHA256 c:/path/to/your/file.exe`
-5. Re-upload signed file as `draw.io-windows-installer-x.y.z.exe` and `draw.io-windows-no-installer-x.y.z.exe`
-6. Add release notes
-7. Publish release
-
-*Note*: In Windows release, when using both x64 and is32 as arch, the result is one big file with both archs. This is why we split them.
-
-Local Storage and Session Storage is stored in the AppData folder:
-
-- macOS: `~/Library/Application Support/draw.io`
-- Windows: `C:\Users\<USER-NAME>\AppData\Roaming\draw.io\`
-
-Not open-contribution
----------------------
-
-draw.io is closed to contributions (unless a maintainer permits it, which is extremely rare).
-
-The level of complexity of this project means that even simple changes 
-can break a _lot_ of other moving parts. The amount of testing required 
-is far more than it first seems. If we were to receive a PR, we'd have 
-to basically throw it away and write it how we want it to be implemented.
-
-We are grateful for community involvement, bug reports, & feature requests. We do
-not wish to come off as anything but welcoming, however, we've
-made the decision to keep this project closed to contributions for 
-the long term viability of the project.
+Getting started:
+1. Run or build the project.
+2. Go to plugin menu (under extras) and install the built in plugins.
+3. Have fun! (detailed guide coming soon)
