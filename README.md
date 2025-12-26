@@ -13,21 +13,21 @@ The system functions as a garden-planning IDE:
 8. In addition to all the base features included ini Draw.io
 
 Who This Is For
--Home gardeners
--Market gardeners
--School garden programs and teachers
--Urban agriculture projects
--Designers seeking visual + computational diagrams
--Anyone who dislikes juggling spreadsheets and calendar apps
+1. Home gardeners
+2. Market gardeners
+3. School garden programs and teachers
+4. Urban agriculture projects
+5. Designers seeking visual + computational diagrams
+6. Anyone who dislikes juggling spreadsheets and calendar apps
 
 Why Draw.io?
 -Draw.io offers:
--A fast, responsive graphical canvas
--XML-structured shapes (ideal for embedding data)
--A plugin system with full graph access
--Zero server dependencies
--Offline desktop and online webapp support
--Compatibility with existing Draw.io diagrams
+1. A fast, responsive graphical canvas
+2. XML-structured shapes (ideal for embedding data)
+3. A plugin system with full graph access
+4. Zero server dependencies
+5. Offline desktop and online webapp support
+6. Compatibility with existing Draw.io diagrams
 
 To run this:
 1. `npm install` (in the root directory of this repo)
@@ -36,12 +36,12 @@ To run this:
 
 To Build This:
 (in the root directory of this repo)
-"npm run release-win"
-"npm run release-win32"
-"npm run release-win-arm64"
-"npm run release-appx"
-"npm run release-linux"
-"npm run release-snap"
+1. "npm run release-win"
+2. "npm run release-win32"
+3. "npm run release-win-arm64"
+4. "npm run release-appx"
+5. "npm run release-linux"
+6. "npm run release-snap"
 
 Getting started:
 1. Run or build the project.
